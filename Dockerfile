@@ -1,32 +1,41 @@
-FROM rocm/dev-ubuntu-22.04:latest AS builder
+# syntax=docker/dockerfile:1
+# Ryzen AI Max+ 395 / Radeon 8060S (gfx1151); the host supplies amdgpu/KFD.
+FROM docker.io/rocm/dev-ubuntu-24.04:7.2.3-complete@sha256:ec1b59bf75ec1122e7a091c0be82301ba12458b038499ef96a5c115876bd78d2
 
-RUN apt-get update && apt-get install -y build-essential cmake git
+ENV DEBIAN_FRONTEND=noninteractive \
+    ROCM_PATH=/opt/rocm
 
-RUN git clone https://github.com/ggerganov/llama.cpp.git /app
-WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential ca-certificates cmake curl ninja-build \
+    && rm -rf /var/lib/apt/lists/*
 
-# Compile specifically for Strix Halo (gfx1151) routing Flash Attention through rocWMMA
-RUN cmake -B build -DGGML_HIP=ON \
-    -DAMDGPU_TARGETS=gfx1151 \
-    -DGGML_HIP_ROCWMMA_FATTN=ON \
-    -DCMAKE_BUILD_TYPE=Release
-RUN cmake --build build --config Release --target llama-server -j$(nproc)
+ARG LLAMA_CPP_REF=8345f333951c661d166b00e6f9362e553768f292
+RUN mkdir -p /opt/llama.cpp \
+    && curl -fL --retry 5 \
+      "https://codeload.github.com/ggml-org/llama.cpp/tar.gz/${LLAMA_CPP_REF}" \
+      | tar -xz --strip-components=1 -C /opt/llama.cpp
 
-FROM rocm/dev-ubuntu-22.04:latest
-COPY --from=builder /app/build/bin/llama-server /usr/local/bin/
+WORKDIR /opt/llama.cpp
+ARG BUILD_JOBS=4
+RUN cmake -S . -B build -G Ninja \
+      -DGGML_HIP=ON \
+      -DGPU_TARGETS=gfx1151 \
+      -DCMAKE_HIP_ARCHITECTURES=gfx1151 \
+      -DGGML_HIP_NO_VMM=ON \
+      -DGGML_CUDA_FA=ON \
+      -DGGML_NATIVE=OFF \
+      -DLLAMA_CURL=OFF \
+      -DLLAMA_BUILD_TESTS=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --target llama-cli llama-server --parallel "$BUILD_JOBS"
 
-# Force ROCm to utilize tuned hipBLASLt matrix multiplication kernels for gfx1151
-ENV ROCBLAS_USE_HIPBLASLT=1
+ENV LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64
+RUN apt-get update && apt-get install -y --no-install-recommends jq \
+    && rm -rf /var/lib/apt/lists/*
+COPY entrypoint.sh /usr/local/bin/llama-33-entrypoint
+COPY download-model.sh /usr/local/bin/download-model
+RUN chmod 0755 /usr/local/bin/llama-33-entrypoint /usr/local/bin/download-model
 
+VOLUME ["/models"]
 EXPOSE 8080
-
-ENTRYPOINT ["llama-server"]
-CMD ["--hf-repo", "bartowski/Llama-3.3-70B-Instruct-GGUF", \
-     "--hf-file", "Llama-3.3-70B-Instruct-Q4_K_M.gguf", \
-     "--n-gpu-layers", "999", \
-     "--ctx-size", "32768", \
-     "--cache-type-k", "q8_0", \
-     "--cache-type-v", "q8_0", \
-     "--flash-attn", \
-     "--host", "0.0.0.0", \
-     "--port", "8080"]
+ENTRYPOINT ["/usr/local/bin/llama-33-entrypoint"]
