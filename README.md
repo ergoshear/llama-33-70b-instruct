@@ -1,9 +1,10 @@
-# Llama 3.3 70B Instruct on Ryzen AI Max+ 395 (Strix Halo)
+# Deep Reasoner Node (mlops-node-7.lan): Llama 3.3 70B Instruct
 
-This container builds a ROCm `llama.cpp` server for a Linux host with an AMD
-Ryzen AI Max+ 395 and Radeon 8060S (`gfx1151`). The 128 GiB LPDDR5X memory is
-shared by the CPU and integrated GPU. Firmware determines the GPU memory
-carveout; it is not a separate 128 GiB VRAM pool.
+This node handles long-form reasoning and algorithmic planning. The target is
+an AMD Ryzen AI Max+ 395 with Radeon 8060S (`gfx1151`) and 64 GB of unified
+memory shared by the CPU and integrated GPU. Firmware determines the GPU
+memory carveout; unified memory is not a separate VRAM pool. This container
+builds a ROCm `llama.cpp` server for that host.
 
 ## Image and model
 
@@ -19,11 +20,13 @@ carveout; it is not a separate 128 GiB VRAM pool.
   specific revision. Use a new volume to change revisions.
 
 The default server uses a 32,768-token context, one parallel slot, Q4_0 K/V
-cache, Flash Attention, and up to 99 GPU layers. A 70B model's weights and
-runtime buffers need substantial shared memory. The required GPU carveout and
-usable context depend on the host firmware, model file, ROCm runtime, and other
-GPU processes. If startup reports an allocation failure, lower `GPU_LAYERS`
-or `CTX_SIZE`. Confirm the startup log shows the context actually allocated.
+cache, Flash Attention, and up to 99 GPU layers. The supplied cluster profile
+mentions hipBLASLt and rocWMMA overrides; this Dockerfile does not set explicit
+rocWMMA overrides. A 70B model's weights and runtime buffers need substantial
+shared memory. The required GPU carveout and usable context depend on host
+firmware, model file, ROCm runtime, and other GPU processes. If startup reports
+an allocation failure, lower `GPU_LAYERS` or `CTX_SIZE`. Confirm the startup
+log shows the context actually allocated.
 
 Runtime options can be set with `GPU_LAYERS`, `CTX_SIZE`, `PARALLEL`, `THREADS`,
 `BATCH_SIZE`, `UBATCH_SIZE`, `CACHE_TYPE_K`, `CACHE_TYPE_V`, `FLASH_ATTN`,
