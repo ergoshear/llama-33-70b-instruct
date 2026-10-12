@@ -12,8 +12,8 @@ if [[ $# -eq 0 ]]; then
         --threads "${THREADS:-16}" \
         --batch-size "${BATCH_SIZE:-256}" \
         --ubatch-size "${UBATCH_SIZE:-128}" \
-        --cache-type-k "${CACHE_TYPE_K:-q4_0}" \
-        --cache-type-v "${CACHE_TYPE_V:-q4_0}" \
+        --cache-type-k "${CACHE_TYPE_K:-q8_0}" \
+        --cache-type-v "${CACHE_TYPE_V:-q8_0}" \
         --flash-attn "${FLASH_ATTN:-on}" --jinja \
         --temp "${TEMP:-0.6}" --top-p "${TOP_P:-0.9}" --top-k "${TOP_K:-40}"
 fi

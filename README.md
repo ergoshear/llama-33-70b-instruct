@@ -19,13 +19,14 @@ builds a ROCm `llama.cpp` server for that host.
   Set `MODEL_REVISION` to a full commit SHA on the first download to select a
   specific revision. Use a new volume to change revisions.
 
-The default server uses a 32,768-token context, one parallel slot, Q4_0 K/V
+The default server uses a 32,768-token context, one parallel slot, Q8_0 K/V
 cache, Flash Attention, and up to 99 GPU layers. The supplied cluster profile
 mentions hipBLASLt and rocWMMA overrides; this Dockerfile does not set explicit
 rocWMMA overrides. A 70B model's weights and runtime buffers need substantial
 shared memory. The required GPU carveout and usable context depend on host
 firmware, model file, ROCm runtime, and other GPU processes. If startup reports
-an allocation failure, lower `GPU_LAYERS` or `CTX_SIZE`. Confirm the startup
+an allocation failure, lower `GPU_LAYERS` or `CTX_SIZE`, or set both
+`CACHE_TYPE_K` and `CACHE_TYPE_V` to `q4_0`. Confirm the startup
 log shows the context actually allocated.
 
 Runtime options can be set with `GPU_LAYERS`, `CTX_SIZE`, `PARALLEL`, `THREADS`,
