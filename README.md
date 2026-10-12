@@ -1,16 +1,15 @@
-# Deep Reasoner Node (mlops-node-7.lan): Llama 3.3 70B Instruct
+# Large RAM Node (mlops-node-4.lan): Llama 3.3 70B Instruct
 
 This node handles long-form reasoning and algorithmic planning. The target is
-an AMD Ryzen AI Max+ 395 with Radeon 8060S (`gfx1151`) and 64 GB of unified
-memory shared by the CPU and integrated GPU. Firmware determines the GPU
-memory carveout; unified memory is not a separate VRAM pool. This container
-builds a ROCm `llama.cpp` server for that host.
+an AMD Radeon AI PRO R9700 (`gfx1201`) with 32 GB of VRAM and 64 GB of system
+RAM. The Q4_K_M model exceeds VRAM, so the cluster profile offloads 32 layers
+to the GPU and keeps the remaining weights in system RAM.
 
 ## Image and model
 
 - The image uses ROCm 7.2.3 and builds llama.cpp commit
   [`8345f333951c661d166b00e6f9362e553768f292`](https://github.com/ggml-org/llama.cpp/commit/8345f333951c661d166b00e6f9362e553768f292)
-  for `gfx1151`, with HIP virtual memory management disabled.
+  for `gfx1201`, with HIP virtual memory management disabled.
 - The model is `Llama-3.3-70B-Instruct-Q4_K_M.gguf` from
   [bartowski/Llama-3.3-70B-Instruct-GGUF](https://huggingface.co/bartowski/Llama-3.3-70B-Instruct-GGUF).
   Reserve about 45 GB for the model volume (the exact file size can vary).
@@ -20,7 +19,7 @@ builds a ROCm `llama.cpp` server for that host.
   specific revision. Use a new volume to change revisions.
 
 The default server uses a 32,768-token context, one parallel slot, Q8_0 K/V
-cache, Flash Attention, and up to 99 GPU layers. The supplied cluster profile
+cache, Flash Attention, and up to 32 GPU layers. The supplied cluster profile
 mentions hipBLASLt and rocWMMA overrides; this Dockerfile does not set explicit
 rocWMMA overrides. A 70B model's weights and runtime buffers need substantial
 shared memory. The required GPU carveout and usable context depend on host

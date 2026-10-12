@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Ryzen AI Max+ 395 / Radeon 8060S (gfx1151); the host supplies amdgpu/KFD.
+# AMD Radeon AI PRO R9700 (gfx1201); the host supplies amdgpu/KFD.
 FROM docker.io/rocm/dev-ubuntu-24.04:7.2.3-complete@sha256:ec1b59bf75ec1122e7a091c0be82301ba12458b038499ef96a5c115876bd78d2
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -19,8 +19,8 @@ WORKDIR /opt/llama.cpp
 ARG BUILD_JOBS=4
 RUN cmake -S . -B build -G Ninja \
       -DGGML_HIP=ON \
-      -DGPU_TARGETS=gfx1151 \
-      -DCMAKE_HIP_ARCHITECTURES=gfx1151 \
+      -DGPU_TARGETS=gfx1201 \
+      -DCMAKE_HIP_ARCHITECTURES=gfx1201 \
       -DGGML_HIP_NO_VMM=ON \
       -DGGML_CUDA_FA=ON \
       -DGGML_NATIVE=OFF \
