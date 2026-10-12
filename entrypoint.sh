@@ -6,7 +6,7 @@ if [[ $# -eq 0 ]]; then
         --model /models/Llama-3.3-70B-Instruct-Q4_K_M.gguf \
         --alias llama-3.3-70b-instruct \
         --host 0.0.0.0 --port 8080 \
-        --n-gpu-layers "${GPU_LAYERS:-99}" \
+        --n-gpu-layers "${GPU_LAYERS:-32}" \
         --ctx-size "${CTX_SIZE:-32768}" \
         --parallel "${PARALLEL:-1}" \
         --threads "${THREADS:-16}" \
